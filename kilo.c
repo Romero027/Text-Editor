@@ -110,8 +110,9 @@ int getWindowSize(int *rows, int *cols) {
   	struct winsize ws;
   	//On success, ioctl() will place the number of columns wide and the number of rows high the terminal 
   	//is into the given winsize struct. On failure, ioctl() returns -1. 
-  	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
-    	return -1;
+  	if (1 || ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+    	if (write(STDOUT_FILENO, "\x1b[999C\x1b[999B", 12) != 12) return -1;
+    	editorReadKey();
   	} else {
     	*cols = ws.ws_col;
     	*rows = ws.ws_row;
@@ -138,8 +139,8 @@ void editorRefreshScreen() {
   	write(STDOUT_FILENO, "\x1b[H", 3);
   	
   	
-  editorDrawRows();
-  write(STDOUT_FILENO, "\x1b[H", 3);
+ 	editorDrawRows();
+  	write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 

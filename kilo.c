@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <termios.h>
@@ -16,9 +17,11 @@
 
 /******************* data *******************/
 
-
+//a global struct that will contain our editor state, which we’ll use to store the width and height of the terminal.
 struct editorConfig {
-  struct termios orig_termios;
+  	int screenrows;
+  	int screencols;
+  	struct termios orig_termios;
 };
 struct editorConfig E;
 
@@ -103,16 +106,28 @@ char editorReadKey() {
   	return c;
 }
 
+int getWindowSize(int *rows, int *cols) {
+  	struct winsize ws;
+  	//On success, ioctl() will place the number of columns wide and the number of rows high the terminal 
+  	//is into the given winsize struct. On failure, ioctl() returns -1. 
+  	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+    	return -1;
+  	} else {
+    	*cols = ws.ws_col;
+    	*rows = ws.ws_row;
+    	return 0;
+  	}
+}
 
 
 /*** output ***/
 
 //editorDrawRows() will handle drawing each row of the buffer of text being edited. 
 void editorDrawRows() {
-  int y;
-  for (y = 0; y < 24; y++) {
-    write(STDOUT_FILENO, "~\r\n", 3);
-  }
+  	int y;
+	for (y = 0; y < E.screenrows; y++) {
+    	write(STDOUT_FILENO, "~\r\n", 3);
+  	}
 }
 
 void editorRefreshScreen() {
@@ -147,9 +162,13 @@ void editorProcessKeypress() {
 
 
 /******************* init *******************/
+void initEditor() {
+  	if (getWindowSize(&E.screenrows, &E.screencols) == -1) die("getWindowSize");
+}
+
 int main() {
 	enableRawMode();
-  	
+  	initEditor();
   	
   	while (1) {
   		editorRefreshScreen();

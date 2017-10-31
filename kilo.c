@@ -16,7 +16,11 @@
 
 /******************* data *******************/
 
-struct termios orig_termios;
+
+struct editorConfig {
+  struct termios orig_termios;
+};
+struct editorConfig E;
 
 //error handling
 void die(const char *s) {
@@ -35,7 +39,7 @@ void die(const char *s) {
 
 void disableRawMode() {
 	//tcsetattr(), tcgetattr(), and read() all return -1 on failure, and set the errno value to indicate the error.
-  	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1)
+  	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1)
     	die("tcsetattr");
 }
 
@@ -47,13 +51,13 @@ void disableRawMode() {
 //interface in raw mode. So we turn it off. 
 void enableRawMode() {
 	//Terminal attributes can be read into a termios struct by tcgetattr().
-	if (tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tcgetattr");
+	 if (tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) die("tcgetattr");
   	//restore their terminal’s original attributes when our program exits.
   	//The atexit() function registers the given function to be called at
     //normal process termination, either via exit(3) or via return from the
     //program's main(). 
   	atexit(disableRawMode);
-  	struct termios raw = orig_termios;
+  	struct termios raw = E.orig_termios;
   	//IXON Turn off Ctrl-S and Ctrl-Q, Now Ctrl-S can be read as a 19 byte and Ctrl-Q can be read as a 17 byte.
   	//ICRNL The I stands for “input flag”, CR stands for “carriage return”, and NL stands for “new line”.
   	//Now Ctrl-M is read as a 13 (carriage return), and the Enter key is also read as a 13.
@@ -103,7 +107,7 @@ char editorReadKey() {
 
 /*** output ***/
 
-
+//editorDrawRows() will handle drawing each row of the buffer of text being edited. 
 void editorDrawRows() {
   int y;
   for (y = 0; y < 24; y++) {

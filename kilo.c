@@ -102,12 +102,25 @@ char editorReadKey() {
 
 
 /*** output ***/
+
+
+void editorDrawRows() {
+  int y;
+  for (y = 0; y < 24; y++) {
+    write(STDOUT_FILENO, "~\r\n", 3);
+  }
+}
+
 void editorRefreshScreen() {
 	//4 means we are writing 4 bytes out to the terminal
 	//The first byte is \x1b, which is the escape character, or 27 in decimal
   	write(STDOUT_FILENO, "\x1b[2J", 4);
   	//H command position the cursor
   	write(STDOUT_FILENO, "\x1b[H", 3);
+  	
+  	
+  editorDrawRows();
+  write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 

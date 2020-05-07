@@ -23,14 +23,16 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
     'ice cream': 1.59})
     print(foods)
         
-    # qlist = []
-    # for idx, _ in enumerate(datas):
-    #     for i in range(len(datas[0])):
-    #         qlist.append((idx, i))
-    # quantity = 
+    qlist = []
+    for idx, _ in enumerate(datas):
+        for i in range(len(datas[0])):
+            qlist.append((idx, i))
+    quantity = 
 
-    # slowest = m.addVar(vtype=GRB.CONTINUOUS, name="slowest", lb = 0.0)
-    # quantity = m.addVar(vtype=GRB.INTEGER, name="quantity", lb = 0)
+    slowest = m.addVar(vtype=GRB.CONTINUOUS, name="slowest", lb = 0.0)
+    quantity = m.addVar(vtype=GRB.INTEGER, name="quantity", lb = 0)
+    print(slowest)
+    print(quantity)
 
     # time_list = [((sum([quantity[(i, j)] for j in range(num_of_class)])/systems[i]) + data_trans_size/bw[i]) for i in range(num_of_clients)]
 

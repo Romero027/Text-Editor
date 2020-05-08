@@ -46,17 +46,10 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
     # Capacity Constraint
     for i in qlist:
         m.addConstr(quantity[i] <= datas[i[0]][i[1]], name='capacity_'+str(i))
+        
+    m.addConstr(np.count_nonzero([sum([quantity[(i, j)] for j in range(num_of_class)]) for i in range(len(datas))]) <= budget, name = 'budget')
 
-    count = 0
-    for i range(len(datas)):
-        temp = sum([quantity[(i, j)] for j in range(num_of_class)
-        if temp > 0.1:
-            count += 1
-
-    
-
-    m.addConstr(sum([1 for i in range(len(datas)) if sum([qlist[(i, j)] for j in range(num_of_class)]) >=1]) <= budget)
-
+    #m.addConstr(sum([1 for i in range(len(datas)) if sum([quantity[(i, j)] for j in range(num_of_class)])]) <= budget, name = 'budget')
 
     m.optimize()
 
@@ -73,12 +66,12 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
 
 
 datas = [[10, 20, 10, 1], [0, 19, 1, 5], [7, 0, 10, 9], [0, 0, 1, 10]]
-system = [14, 10, 17, 10]
+system = [10, 10, 17, 10]
 bw = [2, 5, 5, 10]
 data_trans_size = 5
 cost = [1, 1, 1, 1]
-budget = 2
-preference = [10, 20, 15, 20]
+budget = 1
+preference = [10, 20, 10, 1]
 lp_solver(datas, system, budget, cost, preference, bw, data_trans_size)
 
 # def lp_heuristic():

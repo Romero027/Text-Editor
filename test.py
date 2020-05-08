@@ -27,6 +27,7 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
 
     slowest = m.addVar(vtype=GRB.CONTINUOUS, name="slowest", lb = 0.0)
     quantity = m.addVars(qlist, vtype=GRB.INTEGER, name="quantity", lb = 0)
+    status = m.addVars([i for i in range(num_of_clients)], vtype = GRB.BINARY, name = 'status')
 
 
     time_list = [((sum([quantity[(i, j)] for j in range(num_of_class)])/systems[i]) + data_trans_size/bw[i]) for i in range(num_of_clients)]
@@ -37,17 +38,22 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
 
     # Minimize the slowest
     for t in time_list:
-         m.addConstr(slowest >= t, name='slow')
+        m.addConstr(slowest >= t, name='slow')
 
     # Preference Constraint
     for i in range(num_of_class):
         m.addConstr(sum([quantity[(client, i)] for client in range(num_of_clients)]) >= preference[i], name='preference_' + str(i))
 
     # Capacity Constraint
-    for i in qlist:
-        m.addConstr(quantity[i] <= datas[i[0]][i[1]], name='capacity_'+str(i))
+    m.addConstrs((quantity[i] <= datas[i[0]][i[1]] for i in qlist), name='capacity_'+str(i))
         
-    m.addConstr(np.count_nonzero([sum([quantity[(i, j)] for j in range(num_of_class)]) for i in range(len(datas))]) <= budget, name = 'budget')
+    # Budget Constraint
+    for i in range(num_of_clients):
+        m.addGenConstrIndicator(status[i], true, sum([sum([quantity[(i, j)] for j in range(num_of_class)]), GRB.EQUAL, 1.0)
+
+    m.addConstr(sum([status[i] for i in range(num_of_clients)]) <= budget, name = 'budget')
+
+    # m.addConstr(np.count_nonzero([sum([quantity[(i, j)] for j in range(num_of_class)]) for i in range(len(datas))]) <= budget, name = 'budget')
 
     #m.addConstr(sum([1 for i in range(len(datas)) if sum([quantity[(i, j)] for j in range(num_of_class)])]) <= budget, name = 'budget')
 

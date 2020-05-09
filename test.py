@@ -29,7 +29,7 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
     quantity = m.addVars(qlist, vtype=GRB.INTEGER, name="quantity", lb = 0) # # of example for each class
     status = m.addVars([i for i in range(num_of_clients)], vtype = GRB.BINARY, name = 'status') # Binary var indicates the selection status
 
-    time_list = [((quickSum([quantity[(i, j)] for j in range(num_of_class)])/systems[i]) + data_trans_size/bw[i]) for i in range(num_of_clients)]
+    time_list = [((gp.quickSum([quantity[(i, j)] for j in range(num_of_class)])/systems[i]) + data_trans_size/bw[i]) for i in range(num_of_clients)]
 
     # The objective is to minimize the slowest
     m.setObjective(slowest, GRB.MINIMIZE)
@@ -40,16 +40,16 @@ def lp_solver(datas, systems, budget, cost, preference, bw, data_trans_size):
 
     # Preference Constraint
     for i in range(num_of_class):
-        m.addConstr(quickSum([quantity[(client, i)] for client in range(num_of_clients)]) >= preference[i], name='preference_' + str(i))
+        m.addConstr(gp.quickSum([quantity[(client, i)] for client in range(num_of_clients)]) >= preference[i], name='preference_' + str(i))
 
     # Capacity Constraint
     m.addConstrs((quantity[i] <= datas[i[0]][i[1]] for i in qlist), name='capacity_'+str(i))
 
     # Budget Constraint
     for i in range(num_of_clients):
-        m.addGenConstrIndicator(status[i], False, quickSum([quantity[(i, j)] for j in range(num_of_class)]) ==  0.0)
+        m.addGenConstrIndicator(status[i], False, gp.quickSum([quantity[(i, j)] for j in range(num_of_class)]) ==  0.0)
 
-    m.addConstr(quickSum([status[i] for i in range(num_of_clients)]) <= budget, name = 'budget')
+    m.addConstr(gp.quickSum([status[i] for i in range(num_of_clients)]) <= budget, name = 'budget')
 
     m.optimize()
 

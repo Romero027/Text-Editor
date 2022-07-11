@@ -9,7 +9,7 @@
 #include <sched.h>
 
 // returns the size of the L3 cache in bytes, otherwise -1 on error.
-// if there're two NUMA nodes, then the return value is only for one 
+// if there're two NUMA nodes, then the return value is only for one
 int cache_size() {
 	// return the cache size from cpu 0
 	// assuming that all cpu caches having the same size
@@ -57,47 +57,52 @@ int cache_size() {
 	// line should now be clear of non-numeric characters
 	int value = atoi(line);
 	int cache_size = value * multiplier;
-	
+
 	fclose(cache_size_fd);
 	return cache_size;
 }
 
 int main(int argc, char **argv) {
-	char* volatile block;
-  
+	char* volatile block_src;
+	char* volatile block_dst;
+
 	// Usage: ./l3_cache <duration in sec> <intensity>
-    // e.g., ./l3_cache 10 1000000
-	if (argc < 2) { 
-		printf("Usage: ./l3_cache <duration in sec> <intensity>\n"); 
-		exit(0); 
+    // e.g., ./l3_cache 10 1000000 50
+	if (argc < 2) {
+		printf("Usage: ./l3_cache <duration in sec> <interval in microsecond> <percentage of llc>\n");
+		exit(0);
 	}
 
-	int CACHE_SIZE = cache_size(); 
+	int CACHE_SIZE = cache_size();
 	printf("Detected L3 cache size: %d bytes\n", CACHE_SIZE);
 
-	// create a mapping to memory	
-	block = (char*)mmap(NULL, CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-	if (block == (char *) -1) {
+	// create a mapping to memory
+	block_src = (char*)mmap(NULL, CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	block_dst = (char*)mmap(NULL, CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	if (block_src == (char *) -1 || block_dst == (char *) -1) {
 		perror("error - cannot mmap");
 		exit(1);
 	};
-	
+
 	int usr_timer = atoi(argv[1]);
-    int intensity = atoi(argv[2]);
-	double time_spent = 0.0; 
+    int interval = atoi(argv[2]);
+	int percentage = atoi(argv[3]);
+	double time_spent = 0.0;
   	clock_t begin, end;
+
+	int target_cache_size = (int) CACHE_SIZE*percentage/100;
 
 	while (time_spent < usr_timer) {
   		begin = clock();
-		memcpy(block, block+CACHE_SIZE/2, CACHE_SIZE/2);
+		memcpy(block_dst, block_src, target_cache_size);
         // yielding the cpu and give other threads a chance to run their workloads
-		sched_yield(); 
+		sched_yield();
 		end = clock();
   		time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
         // printf("time spent: %f\n", time_spent);
 
 		// intensity adjuster
-		usleep(intensity);
+		usleep(interval);
 	}
 	return 0;
 }
